@@ -155,12 +155,13 @@ function runGetBattleData(num) {
 	});
 }
 
-runGetBattleData();
+const rule = new schedule.RecurrenceRule();
+rule.hour = 19;
+rule.minute = 00;
 
-// const rule = new schedule.RecurrenceRule();
-// rule.hour = 21;
-// rule.minute = 20;
+let month = new Date().getMonth() + 1;
+let day = new Date().getDate();
 
-// const job = schedule.scheduleJob(rule, function () {
-// 	runGetBattleData(`${new Date().getMonth()}${new Date().getDate()}`);
-// });
+const job = schedule.scheduleJob(rule, function () {
+	runGetBattleData(`${0 + month}${day}`);
+});
