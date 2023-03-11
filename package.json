@@ -1,0 +1,17 @@
+{
+  "name": "sl-bot-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "getBattleData.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "tohkev",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.26.1",
+    "mongoose": "^6.2.3",
+    "node-fetch": "^2.6.7",
+    "puppeteer": "^13.5.1"
+  }
+}
