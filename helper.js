@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const fetch = require("node-fetch");
 const targetUsers = require("./targetUsers.js")
 
@@ -32,16 +34,16 @@ async function isActiveUser(player = "") {
 			console.error("Error with fetching data", error);
 		});
 
-	return hoursSinceLastBattle ? hoursSinceLastBattle < 24 : false; 
+	return {name: player, lastBattle: hoursSinceLastBattle, isActive: hoursSinceLastBattle ? hoursSinceLastBattle <= 24 : false};
 }
 
 async function getAllInactiveUsers(){
     let inactiveUsers = [];
 
     targetUsers.forEach(async user => {
-        let isActive = await isActiveUser(user);
-        if (!isActive){
-            console.log(user);
+        let currentUser = await isActiveUser(user);
+        if (!currentUser.isActive){
+            console.log(`${currentUser.name}: last battle ${currentUser.lastBattle} hours ago`);
             inactiveUsers.push(user);
         }
     })
@@ -49,4 +51,24 @@ async function getAllInactiveUsers(){
     return inactiveUsers
 }
 
-getAllInactiveUsers().then(result => console.log(result));
+async function combineJSONFiles(start, end){
+    let startJson = fs.readFileSync(`./data/history${start}.json`);
+    let resultJson = JSON.parse(startJson);
+
+    for (let i = start+1; i <= end; i++){
+        const fileData = fs.readFileSync(`./data/history${i}.json`);
+        const parsedData = JSON.parse(fileData);
+
+        parsedData.forEach(battle => resultJson.push(battle));
+    }
+
+    // Convert the new object into a JSON string
+    const jsonString = JSON.stringify(resultJson);
+
+    // Write the JSON string to a new file
+    fs.writeFileSync('combined.json', jsonString);
+}
+
+// combineJSONFiles(311, 318);
+
+getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));
