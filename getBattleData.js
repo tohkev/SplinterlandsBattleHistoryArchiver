@@ -156,7 +156,7 @@ function runGetBattleData(num) {
 }
 
 const rule = new schedule.RecurrenceRule();
-rule.hour = 19;
+rule.hour = 20;
 rule.minute = 00;
 
 let month = new Date().getMonth() + 1;
