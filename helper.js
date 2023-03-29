@@ -1,6 +1,7 @@
 const fs = require('fs');
 
 const fetch = require("node-fetch");
+const schedule = require("node-schedule");
 const targetUsers = require("./targetUsers.js")
 
 async function isActiveUser(player = "") {
@@ -69,6 +70,18 @@ async function combineJSONFiles(start, end){
     fs.writeFileSync('combined.json', jsonString);
 }
 
+function scheduler(hour, minute, callback){
+    const rule = new schedule.RecurrenceRule();
+    rule.hour = hour;
+    rule.minute = minute;
+
+    const job = schedule.scheduleJob(rule, function () {
+        callback();
+    });
+}
+
+module.exports = scheduler;
+
 // combineJSONFiles(311, 318);
 
-getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));
+// getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));
