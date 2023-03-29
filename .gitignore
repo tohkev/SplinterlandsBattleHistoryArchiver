@@ -1,3 +1,4 @@
 targetUsers.js
+.env
 /node_modules
 /data
