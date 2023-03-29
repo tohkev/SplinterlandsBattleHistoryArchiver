@@ -1,7 +1,6 @@
 const fetch = require("node-fetch");
 const fs = require("fs");
 const targetUsers = require("./targetUsers.js");
-const schedule = require("node-schedule");
 
 async function getBattleHistory(player = "") {
 	const battleHistory = await fetch(
@@ -83,7 +82,7 @@ function getMonsterInfo(team) {
 	};
 }
 
-function runGetBattleData(num) {
+function runGetBattleData() {
 	let battlesList = [];
 	const battles = targetUsers.map((user) => {
 		return getBattleHistory(user)
@@ -141,27 +140,15 @@ function runGetBattleData(num) {
 			.then((data) => (battlesList = [...battlesList, ...data]));
 	});
 
-	Promise.all(battles).then(() => {
+	const battlesPromise = Promise.all(battles).then(() => {
 		const cleanBattleList = battlesList.filter((x) => x != undefined);
-		fs.writeFile(
-			`data/history${num}.json`,
-			JSON.stringify(cleanBattleList),
-			function (err) {
-				if (err) {
-					console.log(err);
-				}
-			}
-		);
+		return cleanBattleList;
 	});
+
+	return battlesPromise.then((cleanBattleList)=> {
+		const result = cleanBattleList;
+		return result;
+	})
 }
 
-const rule = new schedule.RecurrenceRule();
-rule.hour = 20;
-rule.minute = 00;
-
-let month = new Date().getMonth() + 1;
-let day = new Date().getDate();
-
-const job = schedule.scheduleJob(rule, function () {
-	runGetBattleData(`${0 + month}${day}`);
-});
+module.exports = runGetBattleData;
