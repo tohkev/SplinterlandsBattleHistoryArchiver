@@ -1,4 +1,5 @@
 targetUsers.js
+serviceAccountKey.json
 .env
 /node_modules
 /data
