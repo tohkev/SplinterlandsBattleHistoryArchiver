@@ -70,18 +70,16 @@ async function combineJSONFiles(start, end){
     fs.writeFileSync('combined.json', jsonString);
 }
 
-function scheduler(hour, minute, callback){
+function scheduler(hour, minute, callbackFunction){
     const rule = new schedule.RecurrenceRule();
     rule.hour = hour;
     rule.minute = minute;
 
     const job = schedule.scheduleJob(rule, function () {
-        callback();
+        callbackFunction();
     });
 }
 
 module.exports = scheduler;
 
-// combineJSONFiles(311, 318);
-
-// getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));
+// getAllInactiveUsers();

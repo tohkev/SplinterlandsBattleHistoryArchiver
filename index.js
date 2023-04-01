@@ -1,30 +1,40 @@
-const Dropbox = require("dropbox").Dropbox;
+const admin = require("firebase-admin");
+const { Storage } = require('@google-cloud/storage');
+const serviceAccount = require("./serviceAccountKey.json");
+require('dotenv').config();
 
 const scheduler = require('./helper');
 const getBattleData = require("./getBattleData");
 
-function uploadToDropbox(){
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+})
+
+//reference to bucket
+const storage = new Storage({
+    projectId: serviceAccount.project_id,
+    credentials: serviceAccount
+  })
+const bucket = storage.bucket(process.env.storageBucket);
+
+function uploadToFirebase(){
+    const now = new Date();
+    const file =  bucket.file(`history${now.getMonth()+1}${now.getDate()}.json`);
+
     getBattleData().then((data) => {
-        const jsonString = JSON.stringify(data);
-        const accessToken = process.env.ACCESS_TOKEN;
+        const jsonData = JSON.stringify(data);
     
-        const dbx = new Dropbox({accessToken: accessToken})
-    
-        const now = new Date();
-    
-        dbx.filesUpload({
-            path: `/history${now.getMonth()+1}${now.getDate()}.json`,
-            contents: jsonString,
-            mode: {'.tag': 'overwrite'},
-            autorename: true,
-            mute: false,
-        }).then((response) => {
-            console.log('File uploaded', response);
-        }).catch((error) => {
-            console.error('Error uploading file:', error);
-        });
+        file.save(jsonData, {
+            contentType: "application/json"
+        }, function (err) {
+            if (err){
+                console.error("Error", err);
+            } else {
+                console.log("File created successfully");
+            }
+        })
     });
 }
 
-uploadToDropbox();
-// scheduler(20, 10, uploadToDropbox());
+// uploadToFirebase();
+scheduler(20, 10, uploadToFirebase);
