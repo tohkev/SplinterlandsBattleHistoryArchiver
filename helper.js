@@ -34,7 +34,7 @@ async function isActiveUser(player = "") {
 			console.error("Error with fetching data", error);
 		});
 
-	return {name: player, lastBattle: hoursSinceLastBattle, isActive: hoursSinceLastBattle ? hoursSinceLastBattle <= 24 : false};
+	return {name: player, lastBattle: hoursSinceLastBattle, isActive: hoursSinceLastBattle ? hoursSinceLastBattle <= 99 : false};
 }
 
 async function getAllInactiveUsers(){
@@ -51,12 +51,16 @@ async function getAllInactiveUsers(){
     return inactiveUsers
 }
 
-async function combineJSONFiles(start, end){
-    let startJson = fs.readFileSync(`./data/history${start}.json`);
+async function combineJSONFiles(start, end, month){
+    let starting = start < 10 ? `0${start}` : `${start}`;
+    let startJson = fs.readFileSync(`./data/history${month}${starting}.json`);
+    // let startJson = fs.readFileSync(`./data/history${start}.json`);
+
     let resultJson = JSON.parse(startJson);
 
     for (let i = start+1; i <= end; i++){
-        const fileData = fs.readFileSync(`./data/history${i}.json`);
+        let current = i < 10 ? `0${i}` : `${i}`;
+        const fileData = fs.readFileSync(`./data/history${month}${current}.json`);
         const parsedData = JSON.parse(fileData);
 
         parsedData.forEach(battle => resultJson.push(battle));
@@ -66,9 +70,10 @@ async function combineJSONFiles(start, end){
     const jsonString = JSON.stringify(resultJson);
 
     // Write the JSON string to a new file
-    fs.writeFileSync('combined.json', jsonString);
+    fs.writeFileSync(`combined${month}${start}-${month}${end}.json`, jsonString);
+    // fs.writeFileSync(`combined311-630.json`, jsonString);
 }
 
-// combineJSONFiles(311, 318);
+combineJSONFiles(2,31,"01");
 
-getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));
+// getAllInactiveUsers().then(result => console.log(`${result}: last battle ${result.lastBattle} hours ago`));

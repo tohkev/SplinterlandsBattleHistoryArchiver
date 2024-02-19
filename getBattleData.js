@@ -2,10 +2,16 @@ const fetch = require("node-fetch");
 const fs = require("fs");
 const targetUsers = require("./targetUsers.js");
 const schedule = require("node-schedule");
+const ecc = require('eosjs-ecc') // https://www.npmjs.com/package/eosjs-ecc
+const axios = require('axios'); // npm i axios
 
-async function getBattleHistory(player = "") {
+async function getBattleHistory(player = "", bearerToken) {
 	const battleHistory = await fetch(
-		"https://api2.splinterlands.com/battle/history?player=" + player
+		"https://api2.splinterlands.com/battle/history?player=" + player, {
+		method: 'get',
+		headers: new Headers({
+			'Authorization': 'Bearer ' + bearerToken, 
+		})}
 	)
 		.then((response) => {
 			if (!response.ok) {
@@ -20,7 +26,31 @@ async function getBattleHistory(player = "") {
 		.catch((error) => {
 			console.error("Error with fetching data", error);
 		});
-	return battleHistory.battles.filter((battle) => isRecentBattle(battle));
+	
+	if (battleHistory && battleHistory.battles){
+		return battleHistory.battles.filter((battle) => isRecentBattle(battle));
+	}
+	else{
+		return [];
+	}
+}
+
+async function loginUser(username, posting_key){
+	let params = {
+		username: username,
+		posting_key: posting_key,
+		stake_frequency: 5,   // Minutes
+		airdrop_frequency: 3  // Hours
+	  }
+
+	  params.ts = new Date().getTime();
+	  params.login_signature = ecc.sign(`${params.username}${params.ts}`, params.posting_key);
+	  let url = `https://api2.splinterlands.com/players/login`
+		  + `?name=${params.username}`
+		  + `&ts=${params.ts}`
+		  + `&sig=${params.login_signature}`;
+	  let response = await axios.get(url);
+	  return response.data.jwt_token;
 }
 
 function isRecentBattle(battle) {
@@ -83,10 +113,18 @@ function getMonsterInfo(team) {
 	};
 }
 
-function runGetBattleData(num) {
+async function runGetBattleData(num) {
 	let battlesList = [];
+	username = ''
+	posting_key = ''
+
+	let jwt_token = '';
+	await loginUser(username, posting_key).then(response => {
+		jwt_token = response
+	});
+
 	const battles = targetUsers.map((user) => {
-		return getBattleHistory(user)
+		return getBattleHistory(user, jwt_token)
 			.then((battles) =>
 				battles.map((battle) => {
 					const details = JSON.parse(battle.details);
@@ -157,10 +195,12 @@ function runGetBattleData(num) {
 
 const rule = new schedule.RecurrenceRule();
 rule.hour = 20;
-rule.minute = 00;
+rule.minute = 15;
 
 let month = new Date().getMonth() + 1;
 let day = new Date().getDate();
+
+runGetBattleData(`0${month}${day}`);
 
 const job = schedule.scheduleJob(rule, function () {
 	runGetBattleData(`${0 + month}${day}`);
